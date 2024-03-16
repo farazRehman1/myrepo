@@ -1,0 +1,457 @@
+ Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(readxl)
+data <- read.csv("C:\\Users\\A02426387\\Downloads\\iso.csv")
+
+
+
+# removing the extra columns
+data <- select(data, -X)
+# Filter rows where depthfix is not equal to '0'
+filtered_data<- data %>%
+  filter(depthstd!= '0')
+unique(filtered_data$spp)
+# Assuming df is your dataframe containing columns d and dexc
+
+# Step 1: Replace negative values with their absolute values
+filtered_data$d <- ifelse(filtered_data$d < 0, abs(filtered_data$d), filtered_data$d)
+filtered_data$dexc <- ifelse(filtered_data$dexc < 0, abs(filtered_data$dexc), filtered_data$dexc)
+
+# Step 2: Sum all values in the d and dexc columns
+total_sum <- sum(filtered_data$d) + sum(filtered_data$dexc)
+
+# Step 3: Subtract 100 from the total sum
+adjusted_sum <- total_sum - 100
+
+adjusted_sum
+
+#Create a mapping of species to alternative names
+species_mapping <- c(
+  "Unknown" = "unknown",
+  "Panicum Maximum" = "Panicum Maximum",
+  "Schmidtia Pappophoroides" = "Schmidtia Pappophoroides",
+  "BRA-RAD" = "Bothrichloa Radicans",
+  "Urochloa Mosambicensis" = "urochloa mosambicensis",
+  "Enneapogon Scoparius"  = "Enneapogon Scoparius" ,
+  "Aristida Transvaalensis" =  "Aristida Transvaalensis" ,
+  "MOPANI" = "Colophospermum Mopane" ,
+  "Unkown" = "unknown",
+  "Purple Terminela" = "Purple Terminela" ,
+  "Com-App" = "Colophospermum Mopane",
+  "Com-Moz" =  "Combretum Apiculatum",
+  "WhiteBerry"= "whiteberry" ,
+  "TERMELIA" = "Terminalia Sericea" ,
+  "unkown" = "unknown",
+  "Enneapogon Scaber" ="Enneapogon Scaber" ,
+  "DICHRO" = "Dichrostachys cinerea" ,
+  "unknwon" = "unknwon" ,
+  "ACACIA nigescens" = "Acacia Nigrescens" ,
+  "acac"= "Acacia Nigrescens" ,
+  "acanig"= "Acacia Nigrescens" ,
+  "PAN" = "Panicum Maximum", 
+  "STI" =  "STI" ,
+  "ARI"  = "Aristida Transvaalensis" ,
+  "FOR" = "Forb" ,
+  "MIX" = "Mix Specie" ,
+  "MOP" = "Colophospermum Mopane",
+  "WBB" = "whiteberry" ,  
+  "URO" = "urochloa mosambicensis" ,
+  "TOR"  =  "TOR" ,
+  "GRE" = "Grewia Hexamita",
+  "SHI" = "Schmidtia Pappophoroides" ,
+  "urochloa" = "urochloa mosambicensis", 
+  "panicum" = "Panicum Maximum" ,
+  "Schmidtia" = "Schmidtia Pappophoroides" ,
+  "Thatch" = "Hyperthelia dissoluta" ,
+  "thatch" = "Hyperthelia dissoluta",
+  "Hyperthelia dissoluta" = "Hyperthelia dissoluta",
+  "urochloa" = "urochloa mosambicensis" ,
+  "panicum" =  "Panicum Maximum" ,
+  "Schmidtia" =  "Schmidtia Pappophoroides" ,
+  "Mopani" = "Colophospermum Mopane",
+  "combretum" = "Combretum Apiculatum" ,
+  "comp" =  "Combretum Apiculatum" ,
+  "acacia" = "Acacia Karroo",
+  "acaciaexu" = "Acacia Nigrescens " ,
+  "Maroowa"  = "lannea schweinfurthi",
+  "Marula"   = "lannea schweinfurthi",
+  "eragrostic"  = "Errgrostis Rigidior",
+  "securinega" = "Securinega Virosa" ,
+  "combretumher" = "Combretum Apiculatum" ,
+  "lonchocarpus" = "Philenoptera violacea" ,
+  "bothriochloa"  = "Bothrichloa Radicans" ,
+  "ChickenWood " = "ChickenWood " ,
+  "pogonarthia" = "Pogonarthria Squarrosa",
+  "digitaria" = "Digitara Eriantha" ,
+  "melinis" = "Melinis Minutiflora" ,
+  "aristedia" = "Aristida Transvaalensis" ,
+  "Dicro"  = "Dichrostachys cinerea" ,
+  "dichro" = "Dichrostachys cinerea" ,
+  "heteropogon" = "Heteropogon Contortus",
+  "terminalia"  = "Terminalia Sericea",
+  "term"= "Terminalia Sericea",
+  "buffalothorn"= "Ziziphus Mucronata",
+  "buff"= "Ziziphus Mucronata",
+  "andropogon" = "Andropogon gayanus",
+  "falsemarula"  = "Croton pseudopulchellus",
+  "sporobolus" = "sporobolus pyramidalis",
+  "Albesia"= "Albizia Harveyi",
+  "Whiteberry"= "whiteberry",
+  "setaria sphacelia" ="setaria sphacelia" ,
+  "hyperrhenia filipendula"  ="hyperrhenia filipendula"  ,
+  "melenis"     = "Melinis Minutiflora" ,
+  "schmidtia"  ="Schmidtia Pappophoroides" ,
+  "mopane" = "Colophospermum Mopane",
+  "acacian"= "Acacia Nigrescens",
+  "appleleaf"= "Philenoptera violacea",
+  "speargrass"= "Heteropogon Contortus",
+  "combretuma"= "Combretum Apiculatum",
+  "ximenia"  = "ximenia" ,
+  "combretumh"=  "Combretum Apiculatum",
+  "aristida"  = "Aristida Transvaalensis" ,
+  "marula" = "lannea schweinfurthi",
+  "themeda" = "Themeda Triandra",
+  "caterpillar bush"= "Hypoestes Aristata",
+  "t.prunoides" = "Terminalia Prunoides",
+  "tprunoides" =  "Terminalia Prunoides",
+  "caterpillarbush" = "Hypoestes Aristata",
+  "panmax"  = "Panicum Maximum", 
+  "mopani"  = "Colophospermum Mopane",
+  "whiteberrybush"= "whiteberry",
+  "aharveyi"    = " Albizia Harveyi",
+  "whiteberry"  =  "whiteberry",
+  "urocloa"  = "urochloa mosambicensis" ,
+  "dichrostachys"= "Dichrostachys cinerea" ,
+  "unkn"    = "unknown",
+  "Bothriochloa"= "Bothrichloa Radicans",
+  "dalbergia"= "Dalbergia Menaloxylon",
+  "euclea"    = "Euclea Divinorum",
+  "ziziphus" = "Ziziphus Mucronata",
+  "albizia" = "Albizia Harveyi",
+  "grewia" = "Grewia Hexamita",
+  "lannea"= "lannea schweinfurthi",
+  "eragrostis"= "Errgrostis Rigidior",
+  "hyperthelia"= "Hyperthelia dissoluta",
+  "commiphora" = "Commiphora Affricana",
+  "comp" = "Commiphora Affricana",
+  "other"= "Other",
+  "ficus"= "Ficus Sycomorus",
+  "lumula"  =  "Lumla",
+  "ormocarpum"= "Ormocarpum",
+  "cenchrus"   ="Cenchrus Ciliaris",    
+  "mix"         =   "Mix Specie" ,         
+  "sclerocarya" =  "Sclerocarya birrea" ,
+  "orange" = "orange",
+  "acawel" = "acawel"
+)
+
+
+# Create a new column 'stand_spp' based on the mapping
+data$stand_spp <- species_mapping[data$spp]
+# Create a new column 'stand_spp' based on the mapping
+filtered_data$stand_spp <- species_mapping[filtered_data$spp]
+unique(filtered_data$stand_spp)
+filtered_data$stand_spp <- tolower(trimws(filtered_data$stand_spp))
+
+# Rename the column 'clay' to 'soil_type'
+filtered_data <- rename(filtered_data, soil_type = clay)
+
+
+
+
+# Create a new dataset with specific columns
+soils_data <- select(filtered_data, site, soil_type , stand_spp, depthstd,plot, year, month, d, dexc)
+plant_height <- data.frame(
+  stand_spp = c("unknown", "panicum maximum", "aristida transvaalensis", 
+                "bothrichloa radicans", "schmidtia pappophoroides", "urochloa mosambicensis",  
+                "colophospermum mopane", "purple terminela", "combretum apiculatum", 
+                "enneapogon scoparius", "whiteberry", "terminalia sericea", 
+                "enneapogon scaber", "dichrostachys cinerea", "sti", "forb", 
+                "mix specie", "tor", "grewia hexamita", "hyperthelia dissoluta", 
+                "acacia karroo", "acacia nigrescens", "lannea schweinfurthi",    
+                "errgrostis rigidior", "securinega virosa",    
+                "pogonarthria squarrosa", "digitara eriantha", "melinis minutiflora",     
+                "heteropogon contortus", "ziziphus mucronata", "andropogon gayanus",      
+                "croton pseudopulchellus", "philenoptera violacea", "ximenia",                 
+                "themeda triandra", "hypoestes aristata", "terminalia prunoides",    
+                "albizia harveyi", "hyperrhenia filipendula", "setaria sphacelia",       
+                "acawel", "orange", "other", "dalbergia menaloxylon", "euclea divinorum", 
+                "commiphora affricana", "ficus sycomorus", "lumla", "ormocarpum",              
+                "cenchrus ciliaris", "sclerocarya birrea"),
+  height_m = c(NA, 4.5, 0.7, 
+             1, 1, 1.8,  
+             18, NA, 10, 
+             20, NA, 12, 
+             0.3, 12, NA, NA, 
+             NA, NA, 5, 5, 
+             4, 25, 18,    
+             0.5, 3.7,    
+             1.2, 5, 1.2,     
+             1, 20, 4,      
+             5, 10, NA,                 
+             1.5, 1.5, 15,    
+             20, 1.5, 2,       
+             NA, NA, NA, NA, 7, 
+             5, 30, NA, NA,              
+             1, 17)
+)
+
+# Merge plant_height into soils_data on 'stand_spp'
+soils_data <- merge(soils_data, plant_height, by = "stand_spp", all.x = TRUE)
+
+# Filter for sand soils
+sand_soils <- filter(soils_data, soil_type == 'sand')
+#looking the species which have complete data in letaba
+species_depth_sand<- sand_soils %>%
+  group_by(stand_spp) %>%
+  summarise(depths = list(unique(depthstd)),
+            unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+# Convert list column to string so csv can handle it
+species_depth_clay$depths <- sapply(species_depth_clay$depths, toString)
+
+# Now try writing to CSV again
+#write.csv(species_depth_clay, "C:/Users/A02426387/Documents/clay_depth_species.csv", row.names = FALSE)
+
+# Filter for clay soils
+clay_soils <- filter(soils_data, soil_type == 'clay')
+
+#looking the species which have complete data
+species_depth_clay <- clay_soils %>%
+  group_by(stand_spp) %>%
+  summarise(unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+# downloading the file 
+#write.csv(species_depth_sand, "C:/Users/A02426387/Documents/sand_species.csv", row.names = FALSE)
+
+#looking the species which have complete data in sandy soils
+species_depth_sand <- sand_soils %>%
+  group_by(stand_spp) %>%
+  summarise(unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+#looking at species by each site
+Letaba <- filtered_data %>% 
+  filter(site == "Letaba")
+#looking the species which have complete data in letaba
+species_depth_letaba <- Letaba %>%
+  group_by(stand_spp) %>%
+  summarise(depths = list(unique(depthstd)),
+            unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+# Convert list column to string so csv can handle it
+species_depth_pkop$depths <- sapply(species_depth_pkop$depths, toString)
+
+# Now try writing to CSV again
+#write.csv(species_depth_pkop, "C:/Users/A02426387/Documents/pkop_species.csv", row.names = FALSE)
+
+#there is not a single specie in letaba(dry clay) site who have 4 or more than 4 spp
+#looking at species by each site
+sabie <- soils_data %>% 
+  filter(site == "sabie")
+#looking the species which have complete data in letaba
+species_depth_sabie <- sabie %>%
+  group_by(stand_spp) %>%
+  summarise(depths = list(unique(depthstd)),
+            unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+#we have 14 species in sabie (wet clay) which have four or more than four species
+#looking at species by each site
+pborwa <- soils_data %>% 
+  filter(site == "pborwa")
+#looking the species which have complete data in pborwa(dry sand site)
+species_depth_pborwa <- pborwa %>%
+  group_by(stand_spp) %>%
+  summarise(depths = list(unique(depthstd)),
+            unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+#looking at species by each site pkop (sand)
+pkop <- soils_data %>% 
+  filter(site == "pkop")
+#looking the species which have complete data in pkop
+#pkop have six species 
+species_depth_pkop <- pkop %>%
+  group_by(stand_spp) %>%
+  summarise(depths = list(unique(depthstd)),
+            unique_depths = n_distinct(depthstd)) %>%
+  filter(unique_depths >= 4) %>%
+  arrange(desc(unique_depths))
+print(species_depth_pkop)
+#looking at howw many missing species in pkop site
+pkop_missing_species <- pkop %>%
+  filter(site == "pkop", is.na(stand_spp) | stand_spp == "") %>%
+  summarise(missing_species_count = n())
+
+# Display the number of missing species names at the pkop site
+print(pkop_missing_species)
+
+
+
+#  soils_data is already created and includes both 'sand' and 'clay' soil types
+selected_species <- c("acacia nigrescens", "colophospermum mopane", "combretum apiculatum", 
+                      "lannea schweinfurthi", "panicum maximum", "schmidtia pappophoroides", 
+                      "urochloa mosambicensis", "acacia karroo", "albizia harveyi", "aristida transvaalensis",
+                      "bothrichloa radicans", "colophospermum mopane", "combretum apiculatum","terminalia sericea",
+                      "dalbergia menaloxylon", "dichrostachys cinerea", "forb", "grewia hexamita","setaria sphacelia",
+                      "lonchocarpus capassa", "mix specie", "panicum maximum","hyperthelia dissoluta",
+                      "schmidtia pappophoroides", "sclerocarya birrea", "securinega virosa","hyperrhenia filipendula",
+                      "sti", "themeda triandra", "unknown", "urochloa mosambicensis")
+selected_data <- soils_data[soils_data$stand_spp %in% selected_species, ]
+
+
+
+#Removing subreplicates in each plot
+avg_plot_data <- selected_data %>%
+  group_by(site,month, depthstd, stand_spp, plot) %>%
+  summarise(mean_d = mean(d, na.rm = TRUE),
+            mean_dexc = mean(dexc, na.rm = TRUE))
+
+#  Average for each depth
+avg_in_depth <- avg_plot_data %>%
+  group_by(site, month, depthstd, stand_spp) %>%
+  summarise(mean_d = mean(mean_d), mean_dexc = mean(mean_dexc))
+
+# SCalculate the sum of averages across depths (within site/year/stand_month)
+sum_species_across_depths <- avg_plot_data %>%
+  group_by(site, month, stand_spp) %>%
+  summarise(sum_depths_d = sum(mean_d),
+            sum_depths_dexc = sum(mean_dexc), .groups = 'drop')
+
+# Step 4: Divide each species' plot value by the sum across depths
+#(within site/year/stand_month)
+
+merged_species_data <- merge(avg_plot_data, sum_species_across_depths, by = c("site","month", "stand_spp"))
+merged_species_data <- transform(merged_species_data, prop_d = mean_d / sum_depths_d,
+                            prop_dexc = mean_dexc / sum_depths_dexc)
+
+
+write.csv(stats_species_data, "C:/Users/A02426387/Documents/stats_data.csv", row.names = FALSE)
+# Calculate mean and sd of prop_d and prop_dexc for each combination of site, year, stand_month, and species
+stats_species_data <- merged_species_data %>%
+  group_by(site, month,depthstd, stand_spp) %>%
+  summarise(
+    mean_prop_d = mean(prop_d),
+    sd_prop_d = sd(prop_d),
+    mean_prop_dexc = mean(prop_dexc),
+    sd_prop_dexc = sd(prop_dexc),
+    .groups = 'drop'
+  )%>%
+  # Create new columns for values converted to "per cm"
+  mutate(
+    mean_prop_d_per_cm = sprintf("%.3f", mean_prop_d / depthstd),  # Format mean_prop_d_per_cm
+    sd_prop_d_per_cm = sprintf("%.3f", sd_prop_d / depthstd),      # Format sd_prop_d_per_cm
+    mean_prop_dexc_per_cm = sprintf("%.3f", mean_prop_dexc / depthstd),  # Format mean_prop_dexc_per_cm
+    sd_prop_dexc_per_cm = sprintf("%.3f", sd_prop_dexc / depthstd)      # Format sd_prop_dexc_per_cm
+  )
+
+
+
+
+# Summarize prop_d and prop_dexc by site, year, stand_month, and species
+sum_props_species <- merged_species_data %>%
+  group_by(site, month, stand_spp) %>%
+  summarise(
+    prop_d = sum(prop_d, na.rm = TRUE),
+    prop_dexc = sum(prop_dexc, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+
+
+# Calculate the mean uptake depth per species
+mean_uptake_per_species <- merged_species_data%>%
+  group_by(stand_spp) %>%
+  summarise(mean_depth = mean(depthstd, na.rm = TRUE), # Calculate mean of depthstd
+            mean_uptake = mean(mean_d, na.rm = TRUE)) # Calculate mean of mean_d
+
+
+
+#write.csv(stats_species_data, "C:/Users/A02426387/Documents/s.csv", row.names = FALSE)
+
+
+
+
+
+
+# Unique species in the dataset for visulaizsation
+unique_species <- unique(stats_species_data$stand_spp)
+
+# Loop through each species
+for(species in unique_species) {
+  # Filter data for the current species
+  species_data <- filter(stats_species_data, stand_spp == species)
+  
+  # Generate the plot for the current species
+  p <- ggplot(species_data, aes(x = mean_prop_d, y = depthstd, color = month)) +
+    geom_line() +
+    scale_x_continuous(position = "top") +
+    scale_y_reverse(breaks = c(25, 50, 75, 100)) +
+    labs(title = paste("Uptake Proportion (d) by Season for", species), 
+         x = "Mean Proportional D", 
+         y = "Depth (cm)") +
+    theme_classic() +
+    theme(axis.title.x.top = element_text(vjust = 0.05)) +
+    scale_color_viridis(discrete = TRUE, option = "D") # Use viridis for color
+  
+  # Print the plot
+  print(p)
+  
+  # Optionally, save the plot to a file
+ # ggsave(paste0("Uptake_Proportion_", species, ".png"), plot = p, width = 11, height = 8.5, dpi = 300)
+}
+
+
+
+# List of specific species to work with in sand soils
+specific_species <- c("acacia nigrescens", "colophospermum mopane", "combretum apiculatum", 
+                      "terminalia sericea", "lannea schweinfurthi", "panicum maximum", "schmidtia pappophoroides", 
+                      "urochloa mosambicensis","dichrostachys cinerea","hyperrhenia filipendula","setaria sphacelia","ziziphus mucronata")
+
+# Filter the original dataset for these species
+filtered_sand_data <- sand_soils %>%
+  filter(stand_spp %in% specific_species)
+anyNA(filtered_sand_data)
+
+
+
+
+# List of species to work with from clay soils
+specific_species_clay <- c("acacia karroo", "albizia harveyi", "aristida transvaalensis",
+                           "bothrichloa radicans", "colophospermum mopane", "combretum apiculatum",
+                           "dalbergia menaloxylon", "dichrostachys cinerea", "forb", "grewia hexamita",
+                           "lonchocarpus capassa", "mix specie", "panicum maximum",
+                           "schmidtia pappophoroides", "sclerocarya birrea", "securinega virosa",
+                           "sti", "themeda triandra", "unknown", "urochloa mosambicensis")
+
+# Filter the original dataset for these species
+filtered_clay_data <- soils_data %>%
+  filter(stand_spp %in% specific_species_clay)
+
+
+# To check the number of NA values in each column
+colSums(is.na(filtered_clay_data))
+
+# To check if there are any NA values in the entire dataset
+anyNA(filtered_clay_data)
+
+
+
+#  filter species with 4 or more unique depths in clay soils
+depths_per_species_clay <- clay_soils %>%
+  group_by(stand_spp) %>%
+  summarise(unique_depths = list(unique(depthstd))) %>%
+  mutate(num_depths = lengths(unique_depths)) %>%
+  filter(num_depths >= 4)
+
+
+
+filtered_species_data <- filtered_data[filtered_data$stand_spp %in% selected_species, ]
+
+
